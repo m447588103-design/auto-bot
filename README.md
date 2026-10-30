@@ -1,6 +1,6 @@
 # AutoBot — AI Automation Suite for Discord
 
-**একটা Discord বট, চারটা প্রোডাকশন-লেভেল অটোমেশন।**
+**একটা Discord বট, পাঁচটা প্রোডাকশন-লেভেল ফিচার — অটোমেশন + AI গেম।**
 
 | # | Feature | One-liner |
 |---|---------|-----------|
@@ -8,6 +8,7 @@
 | 🎬 | **Cinematic Director** | এক লাইনের আইডিয়া → স্ক্রিপ্ট → ভয়েসওভার → স্টক ফুটেজ → রিল (mp4) |
 | 🎧 | **AI DJ** | মুড বললেই প্লেলিস্ট বানিয়ে ভয়েস চ্যানেলে লাইভ বাজায় |
 | 🚀 | **Market Sniper** | লাইভ ক্রিপ্টো ডেটা, Reddit হাইপ, AI অ্যানালাইসিস আর প্রাইস অ্যালার্ট |
+| 🎮 | **AI Games** | বাটন-চালিত RPG অ্যাডভেঞ্চার, AI মার্ডার মিস্ট্রি আর সার্ভার-ওয়াইড বস রেইড |
 
 English overview and setup instructions follow the Bangla quick start.
 
@@ -55,9 +56,12 @@ permissions: `Send Messages`, `Embed Links`, `Attach Files`, `Read Message Histo
 
 /sniper hype
 /sniper watch symbol:BTC direction:above price:100000
+/rpg theme:a haunted tea garden in Sylhet
+/detective theme:a wedding in Old Dhaka
+/bossfight theme:a drowned temple in the Sundarbans
 ```
 
-> সব কমান্ড `/` (slash) দিয়ে চলে। পুরনো `!agent`, `!doctor`, `!ping`-ও কাজ করে।
+> সব ফিচার `/` (slash) দিয়ে চলে; গেমগুলোতে `!rpg`, `!detective`, `!bossfight`-এর মতো prefix-ও কাজ করে।
 
 ---
 
@@ -79,8 +83,9 @@ main.py                     # bot bootstrap, service wiring, command sync
 │   │                       # pipeline, publishers, cog
 │   ├── dj/                 # mood, spotify, youtube, curator, player, cog
 │   ├── sniper/             # market, sentiment, analyst, alerts, cog
+│   ├── games/              # models, engine, store, storyteller, render, views, cog
 │   └── assistant/          # !agent, /help, /doctor
-├── tests/                  # 69 offline tests (no network, no ffmpeg needed)
+├── tests/                  # 96 offline tests (no network, no ffmpeg needed)
 ├── scripts/                # setup checker + YouTube OAuth helper
 ├── assets/music/           # drop royalty-free background tracks here
 └── data/                   # sqlite DB, rendered videos, logs (git-ignored)
@@ -260,6 +265,58 @@ strict JSON back — invalid হলে rule-based fallback চলে এবং e
 
 ---
 
+## 🎮 5. AI Games — RPG, Detective & Boss Raid
+
+তিনটা ইন্টারঅ্যাকটিভ গেম, যেগুলো Discord buttons, modals আর Gemini storytelling ব্যবহার করে।
+সব সেশন SQLite-এ সেভ থাকে — বট restart হলেও গেম চলতে থাকে।
+
+### 🎲 Choose-your-own-adventure RPG
+
+| Command | Description |
+|---------|-------------|
+| `/rpg theme:<setting>` · `/game rpg theme:<setting>` · `!rpg <setting>` | নিজের অ্যাডভেঞ্চার শুরু (৩টি choice button) |
+| `/game choose number:2` · `!choose 2` | choice বাছাই — গল্প, HP, Gold, Inventory বদলায় |
+| `/game quit` · `!quitgame` | চলমান গেম শেষ |
+
+প্রতিটি scene-এ Gemini নতুন পরিস্থিতি + ২–৪টি অর্থপূর্ণ choice লেখে। HP শূন্য হলে মৃত্যু,
+৫ scene-এ গল্প শেষ হয়। Choice বাটনে scene number থাকে, তাই পুরোনো মেসেজের বাটনে
+ক্লিক করলে ভুল করে গল্প এগোয় না।
+
+### 🔎 AI Murder Mystery
+
+| Command | Description |
+|---------|-------------|
+| `/detective theme:<setting>` · `/game detective theme:<setting>` · `!detective <setting>` | ৩ suspect সহ নতুন কেস |
+| `/game interrogate suspect:2 question:...` · `!interrogate 2 Where were you?` | suspect-কে জেরা (প্রতিটি suspect-এর আলাদা persona) |
+| `/game accuse suspect:3` · `!accuse 3` | চূড়ান্ত অভিযোগ — ২টি chance |
+
+কেসে ঠিক একজন খুনি থাকে। খুনি আত্মপক্ষ সমর্থন করে, মিথ্যা বলে, অন্য suspect-এর দিকে
+সন্দেহ ঘুরিয়ে দেয়; নির্দোষ suspect সত্য বলে কিন্তু নিজের গোপন কথা লুকায়। উত্তরগুলো
+transcript আকারে রাখা হয়, তাই পরে মিলিয়ে দেখা যায়। ভুল অভিযোগে ২য় chance শেষ হলে
+খুনি পরিচয় ও motive প্রকাশ পায়।
+
+### ⚔️ Server-wide Boss Raid
+
+| Command | Description |
+|---------|-------------|
+| `/bossfight theme:<setting>` · `/game bossfight theme:<setting>` · `!bossfight <setting>` | সার্ভারে বস ডাকুন (একটি guild-এ একটাই) |
+| `/game join` · `!join` | রেইডে যোগ দিন — বসের HP স্কেল করে |
+| `/game attack` · `!attack` | সাধারণ আক্রমণ · +5 mana |
+| `/game spell` · `!spell` | ভারী আক্রমণ · 25 mana |
+| `/game heal` · `!heal` | নিজের HP ফেরান · 20 mana |
+| `/game status` · `!gamestatus` | চলমান গেম ও বসের HP |
+
+বস প্রতি দ্বিতীয় player action-এ পাল্টা আক্রমণ করে, ৪ boss turn পরপর area attack দেয়।
+Damage, crit, healing আর downed/reveal ঘটনাগুলো নিয়ে Gemini cinematic বর্ণনা লেখে।
+বসের HP শূন্য হলে সবাই gold পায়, সবচেয়ে বেশি damage করা player MVP হয়। Cooldown
+`GAMES_BOSS_COOLDOWN` দিয়ে নিয়ন্ত্রিত।
+
+> 💡 **Gemini ছাড়াও চলে:** `GEMINI_API_KEY` না থাকলে বা API fail করলে বিল্ট-ইন
+> অ্যাডভেঞ্চার/কেস/বস স্ক্রিপ্ট ব্যবহার হয়; embed-এর footer-এ `📜 offline script` লেখা থাকে।
+> সব গেম button এবং prefix command — দুভাবেই চালানো যায়।
+
+---
+
 ## 👤 Assistant commands
 
 | Command | Description |
@@ -285,6 +342,15 @@ strict JSON back — invalid হলে rule-based fallback চলে এবং e
 | `HIBP_API_KEY` | — | HIBP scan skip হয় |
 | `SPOTIFY_CLIENT_ID/SECRET` | — | curation enrich করে |
 | `FINNHUB_API_KEY` | — | `/sniper stock` চালু করে |
+| `GAMES_ENABLED` | true | সব AI গেম বন্ধ/চালু |
+| `GAMES_SESSION_TTL` | 180 | inactive গেম কত মিনিট পর expire হবে |
+| `GAMES_MAX_SESSIONS` | 200 | একসাথে সর্বোচ্চ active সেশন |
+| `GAMES_RPG_COOLDOWN` | 2 | RPG choice-এর মাঝে সেকেন্ড |
+| `GAMES_INTERROGATION_COOLDOWN` | 5 | একই user-এর জেরার মাঝে সেকেন্ড |
+| `GAMES_BOSS_COOLDOWN` | 8 | boss action-এর মাঝে সেকেন্ড |
+| `GAMES_BOSS_BASE_HP` | 280 | solo boss HP (প্রতি অতিরিক্ত player +80) |
+| `GAMES_MAX_INTERROGATIONS` | 24 | প্রতি কেসে সর্বোচ্চ প্রশ্ন |
+| `GAMES_AI_NARRATION` | true | boss combat-এ Gemini বর্ণনা (false = দ্রুত ও সস্তা) |
 | `CINEMATIC_MAX_SECONDS` | 60 | reel-এর সর্বোচ্চ দৈর্ঘ্য |
 | `MAX_UPLOAD_MB` | 24 | রিল আপলোডের fallback সীমা (boost না থাকলে ~10 MB কার্যকর) |
 | `CAPTION_FONT` | DejaVu Sans | বাংলার জন্য `Noto Sans Bengali` ইনস্টল করুন |
@@ -311,8 +377,9 @@ Image-এ ffmpeg, `fonts-dejavu`, `fonts-noto-bengali` আর Python deps আছ
 
 ```bash
 pip install -r requirements-dev.txt
-pytest              # 69 offline tests: matcher, store, mood, scripts, captions,
-                    # pipeline orchestration (fakes), alerts, command registration
+pytest              # 96 offline tests: matcher, store, mood, scripts, captions,
+                    # pipeline orchestration (fakes), alerts, command registration,
+                    # game engine, local storyteller, game service flows
 ruff check .
 ruff check . --fix
 ```
@@ -337,6 +404,7 @@ TTS/stock/ffmpeg ফাংশন monkeypatch করা হয়।
 | HIBP 403 on domain | HIBP dashboard-এ domain verify করতে হয় |
 | ভিডিও ১০ MB-র বেশি | boost ছাড়া লিমিট; `CINEMATIC_MAX_UPLOAD_MB=9` |
 | `GEMINI_API_KEY` নেই | সব ফিচার fallback-এ চলে; আসল AI আউটপুটের জন্য key দিন |
+| গেমের বাটন কাজ করছে না | সেশন expire হতে পারে — `/game status` দেখুন, নতুন গেম শুরু করুন; restart-এ active view আবার register হয় |
 
 ---
 
@@ -348,6 +416,8 @@ TTS/stock/ffmpeg ফাংশন monkeypatch করা হয়।
 - Generated reels-এ ব্যবহৃত stock clips-এর ক্রেডিট bot embed-এ দেওয়া হয়; Pexels licence মানুন।
 - Spotify শুধু curation-এ ব্যবহৃত, DRM circumvention নেই।
 - Market data informational; bot কখনো trade করে না বা wallet access করে না।
+- AI গেমে theme, প্রশ্ন আর suspect-উত্তর Gemini-তে যায় (key থাকলে); সেশন `data/autobot.db`-তে
+  TTL পর্যন্ত থাকে এবং `/game quit` দিয়ে তাড়াতাড়ি শেষ করা যায়।
 - Rate limits (CoinGecko/HIBP/Reddit/X) মেনে চলা হয়; বেশি ট্রাফিক হলে key বা interval বাড়ান।
 - Discord ToS: self-bot নয়, normal bot token; privileged intents portal-এ enable করুন।
 
