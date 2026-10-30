@@ -174,6 +174,18 @@ async def test_girlfriend_survives_missing_gemini_without_polluting_memory(tmp_p
         await db.close()
 
 
+async def test_girlfriend_api_failure_is_reported_as_api_error(tmp_path: Path):
+    service, db = await make_service(tmp_path, gemini=FakeGemini(fail=True))
+    try:
+        reply = await service.gf_chat(16, "Rafi", "Kemon acho?")
+        assert reply.source == "local"
+        assert reply.reason == "api_error"
+        assert "API error" in reply.text
+        assert "GEMINI_API_KEY" not in reply.text
+    finally:
+        await db.close()
+
+
 async def test_girlfriend_errors_and_cooldown(tmp_path: Path):
     service, db = await make_service(
         tmp_path,
