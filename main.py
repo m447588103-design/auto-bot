@@ -161,6 +161,19 @@ class AutoBot(commands.Bot):
 
 async def amain() -> None:
     bot = AutoBot(settings)
+
+    gemini = get_gemini()
+    level = thinking_level_for_model(gemini.model)
+    budget = thinking_budget_for_model(gemini.model)
+    thinking = f"level={level}" if level else ("budget=0" if budget == 0 else "default")
+    log.info(
+        "Gemini model=%s backend=%s available=%s thinking=%s",
+        gemini.model,
+        gemini.backend or "none",
+        gemini.available,
+        thinking,
+    )
+
     async with bot:
         await bot.start(settings.discord.token or "")
 
@@ -181,18 +194,9 @@ def main() -> None:
     for name, status in settings.summary().items():
         log.info("  %-14s : %s", name, status)
 
-    gemini = get_gemini()
-    level = thinking_level_for_model(gemini.model)
-    budget = thinking_budget_for_model(gemini.model)
-    thinking = f"level={level}" if level else ("budget=0" if budget == 0 else "default")
-    log.info(
-        "Gemini model=%s backend=%s available=%s thinking=%s",
-        gemini.model,
-        gemini.backend or "none",
-        gemini.available,
-        thinking,
-    )
-
+    # Do not call get_gemini() here. The SDK's async client must be created
+    # inside the running event loop used by the bot, otherwise requests fail
+    # with "attached to a different loop" / closed-loop errors.
     try:
         asyncio.run(amain())
     except KeyboardInterrupt:
