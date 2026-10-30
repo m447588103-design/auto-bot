@@ -9,9 +9,11 @@ import pytest
 from core.gemini import GeminiClient, thinking_budget_for_model
 
 
-def test_thinking_is_disabled_only_for_flash_25():
+def test_thinking_is_disabled_for_supported_flash_models():
     assert thinking_budget_for_model("gemini-2.5-flash") == 0
-    assert thinking_budget_for_model("gemini-2.5-flash-lite") == 0
+    assert thinking_budget_for_model("gemini-3.8-flash") == 0
+    assert thinking_budget_for_model("gemini-3.8-flash-preview") == 0
+    assert thinking_budget_for_model("gemini-3.8-flash-lite") is None
     assert thinking_budget_for_model("gemini-2.5-pro") is None
     assert thinking_budget_for_model("gemini-2.0-flash") is None
     assert thinking_budget_for_model(None) is None

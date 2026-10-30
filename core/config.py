@@ -292,7 +292,7 @@ class Settings:
             ),
             gemini=GeminiSettings(
                 api_key=_str("GEMINI_API_KEY"),
-                model=_str("GEMINI_MODEL", "gemini-2.5-flash") or "gemini-2.5-flash",
+                model=_str("GEMINI_MODEL", "gemini-3.8-flash") or "gemini-3.8-flash",
                 temperature=_float("GEMINI_TEMPERATURE", 0.9, minimum=0.0),
             ),
             leak=LeakSettings(
