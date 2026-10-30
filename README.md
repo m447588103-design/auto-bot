@@ -91,8 +91,8 @@ main.py                     # bot bootstrap, service wiring, command sync
 │   ├── games/              # models, engine, store, storyteller, render, views, cog
 │   ├── companion/          # AI girlfriend + smart Q&A (service, memory, render, cog)
 │   └── assistant/          # !agent, /help, /doctor
-├── tests/                  # 111 offline tests (no network, no ffmpeg needed)
-├── scripts/                # setup checker + YouTube OAuth helper
+├── tests/                  # 114 offline tests (no network, no ffmpeg needed)
+├── scripts/                # setup checker, Gemini health check + YouTube OAuth helper
 ├── assets/music/           # drop royalty-free background tracks here
 └── data/                   # sqlite DB, rendered videos, logs (git-ignored)
 ```
@@ -428,6 +428,14 @@ memory-তে থাকে, তাই আগের কথা মনে রাখ
 
 `/doctor` বা `python scripts/check_setup.py --network` দিয়ে সব যাচাই করা যায়।
 
+AI/GF কাজ না করলে শুধু Gemini connection দেখতে:
+
+```bash
+python scripts/gemini_check.py
+```
+
+এটা key সেট আছে কিনা, SDK backend, model, thinking mode আর একটা ছোট live API call দেখায় — key print করে না।
+
 ---
 
 ## 🐳 Docker
@@ -447,7 +455,7 @@ Image-এ ffmpeg, `fonts-dejavu`, `fonts-noto-bengali` আর Python deps আছ
 
 ```bash
 pip install -r requirements-dev.txt
-pytest              # 111 offline tests: matcher, store, mood, scripts, captions,
+pytest              # 114 offline tests: matcher, store, mood, scripts, captions,
                     # pipeline orchestration (fakes), alerts, command registration,
                     # game engine, local storyteller, game service flows,
                     # companion memory, persona prompts, Q&A chunking
@@ -476,7 +484,8 @@ TTS/stock/ffmpeg ফাংশন monkeypatch করা হয়।
 | ভিডিও ১০ MB-র বেশি | boost ছাড়া লিমিট; `CINEMATIC_MAX_UPLOAD_MB=9` |
 | `GEMINI_API_KEY` নেই | সব ফিচার fallback-এ চলে; আসল AI আউটপুটের জন্য key দিন |
 | `!ask` বলছে key নেই | `.env` ফাইলে `GEMINI_API_KEY=...` দিন (টার্মিনালে টাইপ করবেন না), তারপর `python main.py` restart করুন |
-| `!gf` offline reply দিচ্ছে | Gemini key নেই বা API fail — `GEMINI_API_KEY` চেক করুন; এটা normal fallback |
+| `!gf` offline reply দিচ্ছে | `python scripts/gemini_check.py` চালান। key না থাকলে `.env`-এ দিন; key থাকলে API/quota/model error দেখাবে |
+| key দেওয়ার পরও AI empty/offline | Gemini 2.5 Flash-এর thinking output token খেয়ে ফেলতে পারে — latest code-এ Flash-এর thinking auto-off; code update করে restart করুন |
 | Slash `/gf` DM-এ দেখা যাচ্ছে না | prefix `!gf` DM-এ সবসময় কাজ করে; global slash sync-এ সময় লাগতে পারে |
 | গেমের বাটন কাজ করছে না | সেশন expire হতে পারে — `/game status` দেখুন, নতুন গেম শুরু করুন; restart-এ active view আবার register হয় |
 

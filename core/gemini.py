@@ -73,6 +73,18 @@ def _is_retryable(exc: Exception) -> bool:
     return any(marker in message for marker in _RETRYABLE_MARKERS)
 
 
+def thinking_budget_for_model(model: str | None) -> int | None:
+    """Disable reasoning for Gemini 2.5 Flash, where thinking eats output tokens.
+
+    Gemini 2.5 Flash enables dynamic thinking by default. Its thinking tokens
+    count against ``max_output_tokens``, so short chat replies can come back
+    empty (especially for ``!gf``'s small budget). Setting the budget to zero
+    keeps the full allowance for the visible answer.
+    """
+    name = (model or "").lower()
+    return 0 if "2.5-flash" in name else None
+
+
 class GeminiClient:
     def __init__(
         self,
@@ -178,10 +190,27 @@ class GeminiClient:
                 config_kwargs["max_output_tokens"] = max_output_tokens
             if json_mode:
                 config_kwargs["response_mime_type"] = "application/json"
+
+            thinking_budget = thinking_budget_for_model(self.model)
+            thinking_cls = getattr(types, "ThinkingConfig", None)
+            if thinking_budget is not None and thinking_cls is not None:
+                try:
+                    config_kwargs["thinking_config"] = thinking_cls(
+                        thinking_budget=thinking_budget
+                    )
+                except Exception:
+                    log.debug("Could not disable Gemini thinking", exc_info=True)
+
+            try:
+                config = types.GenerateContentConfig(**config_kwargs)
+            except TypeError:
+                # Older google-genai builds may not know thinking_config yet.
+                config_kwargs.pop("thinking_config", None)
+                config = types.GenerateContentConfig(**config_kwargs)
             response = await self._client.aio.models.generate_content(
                 model=self.model,
                 contents=prompt,
-                config=types.GenerateContentConfig(**config_kwargs),
+                config=config,
             )
             return getattr(response, "text", None) or ""
 

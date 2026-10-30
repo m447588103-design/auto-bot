@@ -32,6 +32,7 @@ class ChatReply:
     text: str
     source: str = "gemini"  # gemini | local
     model: str | None = None
+    reason: str | None = None  # missing_key | api_error | empty
 
 
 class CompanionService:
@@ -206,8 +207,9 @@ class CompanionService:
     async def _gemini_gf(self, prompt: str, user_name: str, message: str) -> ChatReply:
         if not self.ai_available:
             return ChatReply(
-                text=self._local_gf_reply(user_name, message),
+                text=self._local_gf_reply(user_name, message, "missing_key"),
                 source="local",
+                reason="missing_key",
             )
         try:
             reply = await asyncio.wait_for(
@@ -215,16 +217,24 @@ class CompanionService:
                     prompt,
                     system_instruction=self._gf_system(user_name),
                     temperature=0.95,
-                    max_output_tokens=240,
+                    max_output_tokens=400,
                 ),
                 timeout=GF_TIMEOUT,
             )
         except Exception as exc:  # noqa: BLE001 - fallback is the contract
             log.warning("Companion Gemini call failed (%s); using local fallback", exc)
-            return ChatReply(text=self._local_gf_reply(user_name, message), source="local")
+            return ChatReply(
+                text=self._local_gf_reply(user_name, message, "api_error"),
+                source="local",
+                reason="api_error",
+            )
         text = self._clean_gf_output(reply.text)
         if not text:
-            return ChatReply(text=self._local_gf_reply(user_name, message), source="local")
+            return ChatReply(
+                text=self._local_gf_reply(user_name, message, "empty"),
+                source="local",
+                reason="empty",
+            )
         return ChatReply(text=text, source="gemini", model=getattr(reply, "model", None))
 
     def _clean_gf_output(self, text: str) -> str:
@@ -240,7 +250,7 @@ class CompanionService:
             cleaned = cleaned[: self.settings.gf_max_message_chars - 1].rstrip() + "…"
         return cleaned
 
-    def _local_gf_reply(self, user_name: str, message: str) -> str:
+    def _local_gf_reply(self, user_name: str, message: str, reason: str) -> str:
         low = (message or "").lower()
         if any(word in low for word in ("sokal", "good morning", "shubho sokal")):
             warm = f"Shubho sokal, {user_name}! ☀️ Tomar din ta shundor katuk."
@@ -250,10 +260,17 @@ class CompanionService:
             warm = f"Tomar kotha bhalo laglo, {user_name} 💕 Nijer jatno niyo."
         else:
             warm = f"Ami ekhane achi, {user_name} 💕 Tumi bolo, ami shunchi."
-        return (
-            f"{warm} Aj ektu offline mode-e ache — tai shob kotha thik moto bolte parchi na. "
-            "🌸\n-# offline mode · admin GEMINI_API_KEY set korle live reply pabe"
-        )
+
+        if reason == "missing_key":
+            note = "-# offline mode · admin GEMINI_API_KEY set korle live reply pabe"
+            aside = "Aj ektu offline mode-e ache — tai shob kotha thik moto bolte parchi na."
+        elif reason == "empty":
+            note = "-# Gemini returned no text · try again in a moment"
+            aside = "Gemini ekhon ektu confused — abar try koro."
+        else:
+            note = "-# Gemini API error · key, quota and network check korun"
+            aside = "Gemini ekhon answer dite parche na — key/quota check kora dorkar."
+        return f"{warm} {aside} 🌸\n{note}"
 
     async def reset_memory(self, user_id: int) -> bool:
         if not self.settings.enabled:
