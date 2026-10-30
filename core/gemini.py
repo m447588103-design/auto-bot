@@ -74,15 +74,20 @@ def _is_retryable(exc: Exception) -> bool:
 
 
 def thinking_budget_for_model(model: str | None) -> int | None:
-    """Disable reasoning for Gemini 2.5 Flash, where thinking eats output tokens.
+    """Disable reasoning for Flash models where thinking eats output tokens.
 
-    Gemini 2.5 Flash enables dynamic thinking by default. Its thinking tokens
-    count against ``max_output_tokens``, so short chat replies can come back
-    empty (especially for ``!gf``'s small budget). Setting the budget to zero
-    keeps the full allowance for the visible answer.
+    Modern Flash models enable dynamic thinking by default. Their thinking
+    tokens count against ``max_output_tokens``, so short chat replies can come
+    back empty or take a very long time (especially for ``!gf``'s small
+    budget). Setting the budget to zero keeps the full allowance for the
+    visible answer. Flash-Lite variants are left alone: some reject the field.
     """
     name = (model or "").lower()
-    return 0 if "2.5-flash" in name else None
+    if "flash-lite" in name:
+        return None
+    if "2.5-flash" in name or "3.8-flash" in name:
+        return 0
+    return None
 
 
 class GeminiClient:

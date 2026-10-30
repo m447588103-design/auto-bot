@@ -398,6 +398,7 @@ memory-তে থাকে, তাই আগের কথা মনে রাখ
 | `DISCORD_BOT_TOKEN` | — | **required** |
 | `DEV_GUILD_IDS` | — | slash commands সাথে সাথে sync করতে guild id |
 | `GEMINI_API_KEY` | — | না থাকলে demo template / rule engine চলে |
+| `GEMINI_MODEL` | gemini-3.8-flash | Flash-এ thinking auto-off; অন্য model দিলে সেটার behaviour মানা হয় |
 | `PEXELS_API_KEY` | — | না থাকলে picsum fallback |
 | `HIBP_API_KEY` | — | HIBP scan skip হয় |
 | `SPOTIFY_CLIENT_ID/SECRET` | — | curation enrich করে |
@@ -485,7 +486,7 @@ TTS/stock/ffmpeg ফাংশন monkeypatch করা হয়।
 | `GEMINI_API_KEY` নেই | সব ফিচার fallback-এ চলে; আসল AI আউটপুটের জন্য key দিন |
 | `!ask` বলছে key নেই | `.env` ফাইলে `GEMINI_API_KEY=...` দিন (টার্মিনালে টাইপ করবেন না), তারপর `python main.py` restart করুন |
 | `!gf` offline reply দিচ্ছে | `python scripts/gemini_check.py` চালান। key না থাকলে `.env`-এ দিন; key থাকলে API/quota/model error দেখাবে |
-| key দেওয়ার পরও AI empty/offline | Gemini 2.5 Flash-এর thinking output token খেয়ে ফেলতে পারে — latest code-এ Flash-এর thinking auto-off; code update করে restart করুন |
+| key দেওয়ার পরও AI empty/offline | Flash model-এর thinking output token খেয়ে ফেলতে পারে — latest code-এ 2.5/3.8 Flash-এর thinking auto-off; `GEMINI_MODEL=gemini-3.8-flash` দিয়ে restart করুন |
 | Slash `/gf` DM-এ দেখা যাচ্ছে না | prefix `!gf` DM-এ সবসময় কাজ করে; global slash sync-এ সময় লাগতে পারে |
 | গেমের বাটন কাজ করছে না | সেশন expire হতে পারে — `/game status` দেখুন, নতুন গেম শুরু করুন; restart-এ active view আবার register হয় |
 
