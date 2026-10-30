@@ -246,7 +246,33 @@ class GeminiClient:
                 contents=prompt,
                 config=config,
             )
-            return getattr(response, "text", None) or ""
+            try:
+                text = response.text
+            except Exception as exc:
+                candidates = getattr(response, "candidates", None) or []
+                finish = (
+                    getattr(candidates[0], "finish_reason", None)
+                    if candidates
+                    else None
+                )
+                feedback = getattr(response, "prompt_feedback", None)
+                raise GeminiError(
+                    "Gemini response had no text "
+                    f"(finish_reason={finish}, feedback={feedback})"
+                ) from exc
+            if not text:
+                candidates = getattr(response, "candidates", None) or []
+                finish = (
+                    getattr(candidates[0], "finish_reason", None)
+                    if candidates
+                    else None
+                )
+                feedback = getattr(response, "prompt_feedback", None)
+                raise GeminiError(
+                    "Gemini returned an empty response "
+                    f"(finish_reason={finish}, feedback={feedback})"
+                )
+            return text
 
         # legacy SDK is synchronous -> run in a worker thread
         def _legacy_call() -> str:

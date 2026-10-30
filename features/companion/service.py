@@ -16,7 +16,7 @@ from features.companion.store import CompanionStore
 
 log = logging.getLogger(__name__)
 
-GF_TIMEOUT = 20.0
+GF_TIMEOUT = 45.0
 ASK_TIMEOUT = 45.0
 GF_MAX_OUTPUT_TOKENS = 800
 MAX_USER_NAME = 50
