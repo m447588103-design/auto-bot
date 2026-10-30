@@ -21,6 +21,7 @@ from core.config import Settings, settings
 from core.db import Database
 from core.logging_setup import setup_logging
 from features.cinematic.pipeline import MoviePipeline
+from features.companion.service import CompanionService
 from features.dj.curator import DJCurator
 from features.games.service import GameService
 from features.leak_monitor.monitor import LeakMonitor
@@ -39,6 +40,7 @@ EXTENSIONS = (
     "features.dj.cog",
     "features.sniper.cog",
     "features.games.cog",
+    "features.companion.cog",
 )
 
 
@@ -71,6 +73,7 @@ class AutoBot(commands.Bot):
         self.movie_pipeline = MoviePipeline(config.cinematic)
         self.dj_curator = DJCurator(config.dj)
         self.games = GameService(self, self.db, config.games)
+        self.companion = CompanionService(self, self.db, config.companion)
         self.market_data = MarketData(config.sniper)
         self.hype_engine = HypeEngine(config.sniper)
         self.market_analyst = MarketAnalyst()
@@ -117,7 +120,7 @@ class AutoBot(commands.Bot):
         await self.change_presence(
             activity=discord.Activity(
                 type=discord.ActivityType.watching,
-                name="/game /rpg /detective /bossfight",
+                name="/gf /ask · /game /rpg /detective /bossfight",
             ),
             status=discord.Status.online,
         )
