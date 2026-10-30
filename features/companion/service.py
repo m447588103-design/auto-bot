@@ -86,10 +86,15 @@ class CompanionService:
             self._cooldowns = {
                 key: stamp for key, stamp in self._cooldowns.items() if stamp >= cutoff
             }
-        remaining = seconds - (now - self._cooldowns.get((kind, user_id), 0.0))
-        if remaining > 0:
-            raise CompanionError(f"⏳ One moment — try again in **{remaining:.1f}s**.")
-        self._cooldowns[(kind, user_id)] = now
+        key = (kind, user_id)
+        last = self._cooldowns.get(key)
+        if last is not None:
+            remaining = seconds - (now - last)
+            if remaining > 0:
+                raise CompanionError(
+                    f"⏳ One moment — try again in **{remaining:.1f}s**."
+                )
+        self._cooldowns[key] = now
 
     def _lock(self, user_id: int) -> asyncio.Lock:
         lock = self._locks.get(user_id)
