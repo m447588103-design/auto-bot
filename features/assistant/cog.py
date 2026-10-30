@@ -38,6 +38,10 @@ FEATURE_GUIDE = [
         "🎮 AI games",
         "`/rpg` · `/game rpg` · `/game choose` · `/detective` · `/game interrogate` · `/game accuse` · `/bossfight` · `/game attack` · `/game spell` · `/game heal` · `/game join`",
     ),
+    (
+        "💖 Companion & Q&A",
+        "`!gf <message>` · `/gf message:<...>` · `/gfreset` · `!ask <question>` · `/ask question:<...>`",
+    ),
 ]
 
 

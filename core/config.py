@@ -216,6 +216,22 @@ class GameSettings:
 
 
 @dataclass(frozen=True)
+class CompanionSettings:
+    enabled: bool
+    gf_enabled: bool
+    ask_enabled: bool
+    gf_name: str
+    gf_persona: str
+    gf_cooldown_seconds: float
+    ask_cooldown_seconds: float
+    gf_history_turns: int
+    gf_max_message_chars: int
+    ask_max_question_chars: int
+    ask_max_output_tokens: int
+    memory_ttl_days: int
+
+
+@dataclass(frozen=True)
 class Settings:
     discord: DiscordSettings
     gemini: GeminiSettings
@@ -224,6 +240,7 @@ class Settings:
     dj: DJSettings
     sniper: SniperSettings
     games: GameSettings
+    companion: CompanionSettings
     data_dir: Path
     db_path: Path
     log_level: str
@@ -256,6 +273,9 @@ class Settings:
                 "configured" if self.cinematic.youtube_upload_configured else "not configured"
             ),
             "games": "enabled" if self.games.enabled else "disabled",
+            "companion": "enabled" if self.companion.enabled else "disabled",
+            "girlfriend": "enabled" if self.companion.gf_enabled else "disabled",
+            "smart_qa": "enabled" if self.companion.ask_enabled else "disabled",
         }
 
     @classmethod
@@ -365,6 +385,20 @@ class Settings:
                 boss_base_hp=_int("GAMES_BOSS_BASE_HP", 280, minimum=100),
                 max_interrogations=_int("GAMES_MAX_INTERROGATIONS", 24, minimum=3),
                 ai_narration=_bool("GAMES_AI_NARRATION", True),
+            ),
+            companion=CompanionSettings(
+                enabled=_bool("COMPANION_ENABLED", True),
+                gf_enabled=_bool("GF_ENABLED", True),
+                ask_enabled=_bool("ASK_ENABLED", True),
+                gf_name=_str("GF_NAME", "Maya") or "Maya",
+                gf_persona=_str("GF_PERSONA", "") or "",
+                gf_cooldown_seconds=_float("GF_COOLDOWN", 3.0, minimum=1.0),
+                ask_cooldown_seconds=_float("ASK_COOLDOWN", 5.0, minimum=1.0),
+                gf_history_turns=_int("GF_HISTORY_TURNS", 8, minimum=0),
+                gf_max_message_chars=_int("GF_MAX_MESSAGE_CHARS", 700, minimum=100),
+                ask_max_question_chars=_int("ASK_MAX_QUESTION_CHARS", 2000, minimum=100),
+                ask_max_output_tokens=_int("ASK_MAX_OUTPUT_TOKENS", 1600, minimum=200),
+                memory_ttl_days=_int("COMPANION_MEMORY_TTL_DAYS", 30, minimum=1),
             ),
             data_dir=data_dir,
             db_path=_path("DATABASE_PATH", str(data_dir / "autobot.db")),

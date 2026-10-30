@@ -1,6 +1,6 @@
 # AutoBot — AI Automation Suite for Discord
 
-**একটা Discord বট, পাঁচটা প্রোডাকশন-লেভেল ফিচার — অটোমেশন + AI গেম।**
+**একটা Discord বট, ছয়টা প্রোডাকশন-লেভেল ফিচার — অটোমেশন, AI গেম আর কম্প্যানিয়ন।**
 
 | # | Feature | One-liner |
 |---|---------|-----------|
@@ -9,6 +9,7 @@
 | 🎧 | **AI DJ** | মুড বললেই প্লেলিস্ট বানিয়ে ভয়েস চ্যানেলে লাইভ বাজায় |
 | 🚀 | **Market Sniper** | লাইভ ক্রিপ্টো ডেটা, Reddit হাইপ, AI অ্যানালাইসিস আর প্রাইস অ্যালার্ট |
 | 🎮 | **AI Games** | বাটন-চালিত RPG অ্যাডভেঞ্চার, AI মার্ডার মিস্ট্রি আর সার্ভার-ওয়াইড বস রেইড |
+| 💖 | **AI Companion & Q&A** | মিষ্টি AI গার্লফ্রেন্ডের সাথে চ্যাট, আর Gemini দিয়ে যেকোনো প্রশ্নের বিস্তারিত উত্তর |
 
 English overview and setup instructions follow the Bangla quick start.
 
@@ -59,9 +60,13 @@ permissions: `Send Messages`, `Embed Links`, `Attach Files`, `Read Message Histo
 /rpg theme:a haunted tea garden in Sylhet
 /detective theme:a wedding in Old Dhaka
 /bossfight theme:a drowned temple in the Sundarbans
+
+!gf "Sokal sola ki korcho?"
+!ask "Quantum computing ki r eta kivabe kaj kore?"
 ```
 
-> সব ফিচার `/` (slash) দিয়ে চলে; গেমগুলোতে `!rpg`, `!detective`, `!bossfight`-এর মতো prefix-ও কাজ করে।
+> সব ফিচার `/` (slash) দিয়ে চলে; গেম আর কম্প্যানিয়নে `!rpg`, `!gf`, `!ask`-এর মতো prefix-ও কাজ করে।
+> `!gf` আর `!ask` সার্ভার চ্যানেল এবং বটের DM — দুই জায়গাতেই কাজ করে।
 
 ---
 
@@ -84,8 +89,9 @@ main.py                     # bot bootstrap, service wiring, command sync
 │   ├── dj/                 # mood, spotify, youtube, curator, player, cog
 │   ├── sniper/             # market, sentiment, analyst, alerts, cog
 │   ├── games/              # models, engine, store, storyteller, render, views, cog
+│   ├── companion/          # AI girlfriend + smart Q&A (service, memory, render, cog)
 │   └── assistant/          # !agent, /help, /doctor
-├── tests/                  # 96 offline tests (no network, no ffmpeg needed)
+├── tests/                  # 111 offline tests (no network, no ffmpeg needed)
 ├── scripts/                # setup checker + YouTube OAuth helper
 ├── assets/music/           # drop royalty-free background tracks here
 └── data/                   # sqlite DB, rendered videos, logs (git-ignored)
@@ -317,6 +323,59 @@ Damage, crit, healing আর downed/reveal ঘটনাগুলো নিয়
 
 ---
 
+## 💖 6. AI Companion & Smart Q&A
+
+দুটো হালকা কিন্তু দৈনন্দিন কাজে সবচেয়ে বেশি লাগা AI কমান্ড। দুটোই Gemini ব্যবহার করে,
+সার্ভার চ্যানেল এবং বটের **DM**-এ কাজ করে, আর `GEMINI_API_KEY` ছাড়া ভদ্রভাবে জানিয়ে দেয়।
+
+### 💖 AI Girlfriend — `!gf`
+
+```bash
+!gf "Sokal sola ki korcho?"
+!gf "Amar din ta khub boring, ektu kichu bolo na"
+/gf message:Ami tomake miss korchi private:true
+```
+
+প্রতিটি রিকোয়েস্টের সাথে একটা system prompt যায় — মিষ্টি, কেয়ারিং, রোমান্টিক কিন্তু
+wholesome ভার্চুয়াল গার্লফ্রেন্ড persona; কিউট ইমোজি, ছোট চ্যাট-স্টাইল রিপ্লাই আর
+ইউজারের ভাষা (বাংলা / Banglish / English) ফলো করে। শেষ কয়েকটা কথোপকথন per-user
+memory-তে থাকে, তাই আগের কথা মনে রাখতে পারে।
+
+| Command | Description |
+|---------|-------------|
+| `!gf <message>` · `/gf message:<...>` | গার্লফ্রেন্ডের সাথে চ্যাট (DM-এও চলে) |
+| `/gf message:<...> private:true` | শুধু নিজে উত্তর দেখুন |
+| `!gfreset` · `/gfreset` · `!gf reset` | সেভ করা চ্যাট মেমোরি মুছে ফেলুন |
+
+> 🛡️ **সীমা:** PG-13, কোনো যৌন কনটেন্ট নেই, টাকা/পাসওয়ার্ড চায় না, exclusivity-তে চাপ দেয় না,
+> এবং জিজ্ঞাসা করলে স্বীকার করে যে সে AI — মানুষ নয়। Crisis/self-harm ইঙ্গিত পেলে flirty
+> tone বাদ দিয়ে স্থানীয় emergency service বা trusted person-এর সাথে যোগাযোগ করতে বলে।
+> মেমোরি শুধু আপনার `data/autobot.db`-তে থাকে, per-user key করা, আর
+> `COMPANION_MEMORY_TTL_DAYS` (default 30 দিন) পরে নিজেই মুছে যায়।
+
+### 🧠 Smart Q&A — `!ask`
+
+```bash
+!ask "Quantum computing ki r eta kivabe kaj kore?"
+!ask "Explain TCP vs UDP with a real-world example"
+!ask "Write a Python function to reverse a linked list"
+/ask question:বাংলাদেশে সৌরবিদ্যুতের ভবিষ্যৎ কী?
+```
+
+প্রশ্ন সোজা Gemini-তে যায় — আলাদা Google search লাগে না। উত্তর detailed, structured
+(heading/bullet/example, দরকার হলে code block), এবং প্রশ্নের ভাষাতেই আসে। লম্বা উত্তর
+কয়েকটা embed-এ ভাগ করে পাঠানো হয়, তাই 2000-char limit-এ কিছু কাটে না।
+
+| Command | Description |
+|---------|-------------|
+| `!ask <question>` · `/ask question:<...>` | যেকোনো প্রশ্নের বিস্তারিত উত্তর |
+| `/ask question:<...> private:true` | উত্তর শুধু নিজে দেখুন |
+
+> 💡 `!agent` আগের মতোই আছে — browsing দরকার হলে সেটাই ব্যবহার করুন। `!ask` শুধু
+> দ্রুত, নির্ভুল, বিস্তারিত উত্তরের জন্য; প্রশ্ন/উত্তর কোথাও সেভ করা হয় না।
+
+---
+
 ## 👤 Assistant commands
 
 | Command | Description |
@@ -325,6 +384,7 @@ Damage, crit, healing আর downed/reveal ঘটনাগুলো নিয়
 | `/features` | ফিচার ওভারভিউ |
 | `/doctor` | API keys, ffmpeg, TTS, DB, disk চেক (secrets কখনো দেখায় না) |
 | `!agent <question>` | Gemini general assistant (ঐচ্ছিক Playwright browsing) |
+| `!gf` / `!ask` | AI companion + detailed Q&A (উপরে 💖 section দেখুন; DM-এও চলে) |
 | `!ping` | Gateway latency |
 
 ---
@@ -351,6 +411,16 @@ Damage, crit, healing আর downed/reveal ঘটনাগুলো নিয়
 | `GAMES_BOSS_BASE_HP` | 280 | solo boss HP (প্রতি অতিরিক্ত player +80) |
 | `GAMES_MAX_INTERROGATIONS` | 24 | প্রতি কেসে সর্বোচ্চ প্রশ্ন |
 | `GAMES_AI_NARRATION` | true | boss combat-এ Gemini বর্ণনা (false = দ্রুত ও সস্তা) |
+| `COMPANION_ENABLED` | true | `!gf` ও `!ask` একসাথে বন্ধ/চালু |
+| `GF_ENABLED` / `ASK_ENABLED` | true | আলাদা করে বন্ধ/চালু |
+| `GF_NAME` | Maya | গার্লফ্রেন্ডের নাম |
+| `GF_PERSONA` | — | অতিরিক্ত persona instruction (safety rules override করে না) |
+| `GF_COOLDOWN` / `ASK_COOLDOWN` | 3 / 5 | প্রতি user cooldown (সেকেন্ড) |
+| `GF_HISTORY_TURNS` | 8 | কত turn চ্যাট মেমোরি রাখবে (0 = মেমোরি নেই) |
+| `COMPANION_MEMORY_TTL_DAYS` | 30 | inactive companion মেমোরি কত দিনে মুছবে |
+| `ASK_MAX_OUTPUT_TOKENS` | 1600 | `!ask` উত্তরের সর্বোচ্চ দৈর্ঘ্য |
+| `GF_MAX_MESSAGE_CHARS` | 700 | `!gf`-এ এক মেসেজের সর্বোচ্চ অক্ষর (উত্তরও এতটুকু) |
+| `ASK_MAX_QUESTION_CHARS` | 2000 | `!ask` প্রশ্নের সর্বোচ্চ অক্ষর |
 | `CINEMATIC_MAX_SECONDS` | 60 | reel-এর সর্বোচ্চ দৈর্ঘ্য |
 | `MAX_UPLOAD_MB` | 24 | রিল আপলোডের fallback সীমা (boost না থাকলে ~10 MB কার্যকর) |
 | `CAPTION_FONT` | DejaVu Sans | বাংলার জন্য `Noto Sans Bengali` ইনস্টল করুন |
@@ -377,9 +447,10 @@ Image-এ ffmpeg, `fonts-dejavu`, `fonts-noto-bengali` আর Python deps আছ
 
 ```bash
 pip install -r requirements-dev.txt
-pytest              # 96 offline tests: matcher, store, mood, scripts, captions,
+pytest              # 111 offline tests: matcher, store, mood, scripts, captions,
                     # pipeline orchestration (fakes), alerts, command registration,
-                    # game engine, local storyteller, game service flows
+                    # game engine, local storyteller, game service flows,
+                    # companion memory, persona prompts, Q&A chunking
 ruff check .
 ruff check . --fix
 ```
@@ -404,6 +475,9 @@ TTS/stock/ffmpeg ফাংশন monkeypatch করা হয়।
 | HIBP 403 on domain | HIBP dashboard-এ domain verify করতে হয় |
 | ভিডিও ১০ MB-র বেশি | boost ছাড়া লিমিট; `CINEMATIC_MAX_UPLOAD_MB=9` |
 | `GEMINI_API_KEY` নেই | সব ফিচার fallback-এ চলে; আসল AI আউটপুটের জন্য key দিন |
+| `!ask` বলছে key নেই | `.env` ফাইলে `GEMINI_API_KEY=...` দিন (টার্মিনালে টাইপ করবেন না), তারপর `python main.py` restart করুন |
+| `!gf` offline reply দিচ্ছে | Gemini key নেই বা API fail — `GEMINI_API_KEY` চেক করুন; এটা normal fallback |
+| Slash `/gf` DM-এ দেখা যাচ্ছে না | prefix `!gf` DM-এ সবসময় কাজ করে; global slash sync-এ সময় লাগতে পারে |
 | গেমের বাটন কাজ করছে না | সেশন expire হতে পারে — `/game status` দেখুন, নতুন গেম শুরু করুন; restart-এ active view আবার register হয় |
 
 ---
@@ -418,6 +492,10 @@ TTS/stock/ffmpeg ফাংশন monkeypatch করা হয়।
 - Market data informational; bot কখনো trade করে না বা wallet access করে না।
 - AI গেমে theme, প্রশ্ন আর suspect-উত্তর Gemini-তে যায় (key থাকলে); সেশন `data/autobot.db`-তে
   TTL পর্যন্ত থাকে এবং `/game quit` দিয়ে তাড়াতাড়ি শেষ করা যায়।
+- `!gf`-এ লেখা কথা Gemini-তে যায় এবং শেষ কয়েক turn `companion_memory` টেবিলে (per-user,
+  `data/autobot.db`) থাকে; `/gfreset` দিয়ে সাথে সাথে মুছে ফেলা যায়। `!ask`-এর প্রশ্ন/উত্তর
+  কোথাও সেভ হয় না। AI companion মানুষের বিকল্প নয় — detach না হয়ে real-life সম্পর্ক ও
+  পেশাদার সহায়তাকে গুরুত্ব দিন।
 - Rate limits (CoinGecko/HIBP/Reddit/X) মেনে চলা হয়; বেশি ট্রাফিক হলে key বা interval বাড়ান।
 - Discord ToS: self-bot নয়, normal bot token; privileged intents portal-এ enable করুন।
 

@@ -33,13 +33,24 @@ async def test_all_extensions_load_and_register_commands(tmp_path: Path):
             "AI DJ",
             "Market Sniper",
             "AI Games",
+            "Companion",
         } <= cog_names
 
         tree = bot.tree
         for group in ("leak", "movie", "dj", "sniper", "game"):
             command = tree.get_command(group)
             assert command is not None, f"/{group} group missing"
-        for root in ("doctor", "help", "features", "rpg", "detective", "bossfight"):
+        for root in (
+            "doctor",
+            "help",
+            "features",
+            "rpg",
+            "detective",
+            "bossfight",
+            "gf",
+            "gfreset",
+            "ask",
+        ):
             assert tree.get_command(root) is not None, f"/{root} missing"
 
         leak = tree.get_command("leak")
@@ -75,7 +86,18 @@ async def test_all_extensions_load_and_register_commands(tmp_path: Path):
         # prefix commands still exist for backwards compatibility
         assert bot.get_command("agent") is not None
         assert bot.get_command("doctor") is not None
-        for prefix in ("rpg", "choose", "detective", "interrogate", "accuse", "bossfight", "attack"):
+        for prefix in (
+            "rpg",
+            "choose",
+            "detective",
+            "interrogate",
+            "accuse",
+            "bossfight",
+            "attack",
+            "gf",
+            "gfreset",
+            "ask",
+        ):
             assert bot.get_command(prefix) is not None, f"!{prefix} missing"
     finally:
         for extension in reversed(EXTENSIONS):
