@@ -1,0 +1,21 @@
+services:
+  autobot:
+    build: .
+    container_name: autobot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      # persistent database, renders and logs
+      - ./data:/app/data
+      # drop royalty-free background tracks here
+      - ./assets/music:/app/assets/music
+      # YouTube OAuth client secret + token, yt-dlp cookies
+      - ./credentials:/app/credentials
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
