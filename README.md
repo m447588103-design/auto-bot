@@ -486,6 +486,7 @@ TTS/stock/ffmpeg ফাংশন monkeypatch করা হয়।
 | `GEMINI_API_KEY` নেই | সব ফিচার fallback-এ চলে; আসল AI আউটপুটের জন্য key দিন |
 | `!ask` বলছে key নেই | `.env` ফাইলে `GEMINI_API_KEY=...` দিন (টার্মিনালে টাইপ করবেন না), তারপর `python main.py` restart করুন |
 | `!gf` offline reply দিচ্ছে | `python scripts/gemini_check.py` চালান। key না থাকলে `.env`-এ দিন; key থাকলে API/quota/model error দেখাবে |
+| `!gf` বলছে "Gemini API error" | `python scripts/gemini_check.py --gf` চালান — এটা `!gf`-এর মতোই লম্বা system prompt পাঠায়, তাই আসল error দেখাবে। output-টা key ছাড়া পাঠান |
 | key দেওয়ার পরও AI empty/offline | 3.8 Flash-এর default `medium` thinking উত্তর দেরি করায় বা token খায় — latest code-এ 3.8 Flash-এ `low`, 2.5 Flash-এ thinking off; `GEMINI_MODEL=gemini-3.8-flash` দিয়ে restart করুন |
 | Slash `/gf` DM-এ দেখা যাচ্ছে না | latest code global commands sync করে; Discord-এ global publish হতে কিছু সময় (মাঝে মাঝে ১ ঘণ্টা) লাগে। ততক্ষণ prefix `!gf` DM-এ কাজ করবে |
 | গেমের বাটন কাজ করছে না | সেশন expire হতে পারে — `/game status` দেখুন, নতুন গেম শুরু করুন; restart-এ active view আবার register হয় |
