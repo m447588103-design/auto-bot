@@ -1,0 +1,35 @@
+# secrets
+.env
+.env.*
+!.env.example
+credentials/
+*.pem
+*.key
+
+# runtime data
+data/
+logs/
+*.db
+*.db-wal
+*.db-shm
+
+# generated media
+assets/music/*
+!assets/music/README.md
+!assets/music/.gitkeep
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+
+# editors / os
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

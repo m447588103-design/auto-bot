@@ -1,0 +1,21 @@
+[project]
+name = "auto-bot"
+version = "2.0.0"
+description = "Autonomous AI agent for Discord: leak monitor, cinematic director, AI DJ and market sniper"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+exclude = ["data", ".venv"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "W", "I", "B"]
+ignore = ["E501", "B008", "B904", "B905"]
