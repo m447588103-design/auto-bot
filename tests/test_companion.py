@@ -145,6 +145,7 @@ async def test_girlfriend_reply_uses_persona_and_memory(tmp_path: Path):
         assert "bhalo achi" in first.text
         assert "Maya" in fake.calls[0]["system_instruction"]
         assert "PG-13" in fake.calls[0]["system_instruction"]
+        assert fake.calls[0]["max_output_tokens"] >= 800
 
         second = await service.gf_chat(11, "Rafi", "Amar kotha mone ache?")
         assert "Sokal sola ki korcho?" in fake.calls[1]["prompt"]

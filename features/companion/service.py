@@ -18,6 +18,7 @@ log = logging.getLogger(__name__)
 
 GF_TIMEOUT = 20.0
 ASK_TIMEOUT = 45.0
+GF_MAX_OUTPUT_TOKENS = 800
 MAX_USER_NAME = 50
 
 _QUOTE_PAIRS = (('"', '"'), ("'", "'"), ("“", "”"), ("‘", "’"))
@@ -217,7 +218,7 @@ class CompanionService:
                     prompt,
                     system_instruction=self._gf_system(user_name),
                     temperature=0.95,
-                    max_output_tokens=400,
+                    max_output_tokens=GF_MAX_OUTPUT_TOKENS,
                 ),
                 timeout=GF_TIMEOUT,
             )
