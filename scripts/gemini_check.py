@@ -46,7 +46,7 @@ async def main() -> int:
     try:
         reply = await client.generate(
             "Reply with exactly: OK",
-            max_output_tokens=64,
+            max_output_tokens=512,
             temperature=0.0,
         )
     except Exception as exc:  # noqa: BLE001 - this script is a diagnostic
