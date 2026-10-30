@@ -19,6 +19,7 @@ from discord.ext import commands
 
 from core.config import Settings, settings
 from core.db import Database
+from core.gemini import get_gemini, thinking_budget_for_model, thinking_level_for_model
 from core.logging_setup import setup_logging
 from features.cinematic.pipeline import MoviePipeline
 from features.companion.service import CompanionService
@@ -101,18 +102,27 @@ class AutoBot(commands.Bot):
             await self.price_alerts.start()
 
     async def _sync_commands(self) -> None:
+        # Global commands are the set Discord uses in DMs. Always sync them,
+        # even while developing against a guild, otherwise /gf cannot work in
+        # a DM. Discord may take a little while to publish globally.
         try:
-            if self.config.discord.dev_guild_ids:
-                for guild_id in self.config.discord.dev_guild_ids:
-                    guild = discord.Object(id=guild_id)
-                    self.tree.copy_global_to(guild=guild)
-                    synced = await self.tree.sync(guild=guild)
-                    log.info("Synced %s commands to guild %s", len(synced), guild_id)
-            else:
-                synced = await self.tree.sync()
-                log.info("Synced %s global slash commands", len(synced))
+            synced = await self.tree.sync()
+            log.info("Synced %s global slash commands (guilds + DMs)", len(synced))
         except discord.HTTPException:
-            log.exception("Slash command sync failed (check the bot's applications.commands scope)")
+            log.exception(
+                "Global slash command sync failed (DM commands may be stale; "
+                "check the bot's applications.commands scope or try again later)"
+            )
+        if not self.config.discord.dev_guild_ids:
+            return
+        try:
+            for guild_id in self.config.discord.dev_guild_ids:
+                guild = discord.Object(id=guild_id)
+                self.tree.copy_global_to(guild=guild)
+                synced = await self.tree.sync(guild=guild)
+                log.info("Synced %s commands to guild %s", len(synced), guild_id)
+        except discord.HTTPException:
+            log.exception("Guild slash command sync failed for %s", self.config.discord.dev_guild_ids)
 
     async def on_ready(self) -> None:
         log.info("Logged in as %s (id=%s)", self.user, getattr(self.user, "id", "?"))
@@ -170,6 +180,18 @@ def main() -> None:
     log.info("Starting AutoBot (environment=%s)", settings.environment)
     for name, status in settings.summary().items():
         log.info("  %-14s : %s", name, status)
+
+    gemini = get_gemini()
+    level = thinking_level_for_model(gemini.model)
+    budget = thinking_budget_for_model(gemini.model)
+    thinking = f"level={level}" if level else ("budget=0" if budget == 0 else "default")
+    log.info(
+        "Gemini model=%s backend=%s available=%s thinking=%s",
+        gemini.model,
+        gemini.backend or "none",
+        gemini.available,
+        thinking,
+    )
 
     try:
         asyncio.run(amain())

@@ -366,8 +366,15 @@ class FakeFollowup:
 class FakeInteraction:
     def __init__(self):
         self.user = SimpleNamespace(id=42, display_name="Nabila")
+        self.guild = SimpleNamespace(id=123)
         self.response = FakeResponse()
         self.followup = FakeFollowup()
+
+
+class FakeDMInteraction(FakeInteraction):
+    def __init__(self):
+        super().__init__()
+        self.guild = None
 
 
 async def test_prefix_commands_reply_with_embeds_and_text(tmp_path: Path):
@@ -416,5 +423,27 @@ async def test_slash_commands_defer_and_send_private(tmp_path: Path):
         interaction = FakeInteraction()
         await cog.gfreset_slash.callback(cog, interaction)
         assert interaction.followup.messages[0]["ephemeral"] is True
+    finally:
+        await db.close()
+
+
+async def test_slash_commands_work_in_dms_without_ephemeral(tmp_path: Path):
+    from features.companion.cog import CompanionCog
+
+    service, db = await make_service(tmp_path, gemini=FakeGemini("DM hi 💕", "DM answer"))
+    try:
+        cog = CompanionCog(bot=SimpleNamespace(), service=service)
+
+        interaction = FakeDMInteraction()
+        await cog.gf_slash.callback(cog, interaction, message="hello", private=True)
+        assert interaction.response.defer_kwargs == {"thinking": True, "ephemeral": False}
+        assert interaction.followup.messages[0]["ephemeral"] is False
+        assert interaction.followup.messages[0]["args"][0] == "DM hi 💕"
+
+        interaction = FakeDMInteraction()
+        await cog.ask_slash.callback(cog, interaction, question="What is TCP?", private=True)
+        assert interaction.response.defer_kwargs == {"thinking": True, "ephemeral": False}
+        assert interaction.followup.messages[0]["ephemeral"] is False
+        assert "TCP" in (interaction.followup.messages[0]["embed"].title or "")
     finally:
         await db.close()
