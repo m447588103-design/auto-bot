@@ -74,20 +74,39 @@ def _is_retryable(exc: Exception) -> bool:
 
 
 def thinking_budget_for_model(model: str | None) -> int | None:
-    """Disable reasoning for Flash models where thinking eats output tokens.
+    """Return a legacy thinking budget for Gemini 2.5 Flash.
 
-    Modern Flash models enable dynamic thinking by default. Their thinking
-    tokens count against ``max_output_tokens``, so short chat replies can come
-    back empty or take a very long time (especially for ``!gf``'s small
-    budget). Setting the budget to zero keeps the full allowance for the
-    visible answer. Flash-Lite variants are left alone: some reject the field.
+    The ``thinking_budget`` field belongs to the Gemini 2.5 family. Gemini 3
+    Flash accepts it only for backwards compatibility and silently remaps it;
+    use :func:`thinking_level_for_model` there instead. Flash-Lite variants
+    are left alone because some reject the field.
     """
     name = (model or "").lower()
     if "flash-lite" in name:
         return None
-    if "2.5-flash" in name or "3.8-flash" in name:
+    if "2.5-flash" in name:
         return 0
     return None
+
+
+def thinking_level_for_model(model: str | None) -> str | None:
+    """Lowest supported thinking level for Gemini 3 Flash.
+
+    Gemini 3.8 Flash defaults to ``medium`` thinking, which makes short chat
+    replies slow and can consume the whole ``max_output_tokens`` allowance.
+    ``minimal`` is not supported on 3.8 Flash, so ``low`` is the fastest
+    supported setting. Never send this together with a thinking budget.
+    """
+    name = (model or "").lower()
+    if "flash-lite" in name:
+        return None
+    if "gemini-3" in name and "flash" in name:
+        return "low"
+    return None
+
+
+def _is_gemini3_model(model: str | None) -> bool:
+    return "gemini-3" in (model or "").lower()
 
 
 class GeminiClient:
@@ -188,7 +207,11 @@ class GeminiClient:
         if self._backend == "google-genai":
             from google.genai import types  # type: ignore
 
-            config_kwargs: dict[str, Any] = {"temperature": temperature}
+            # Gemini 3 models are tuned for the default temperature. Google warns
+            # that lower values can cause looping or degraded output.
+            config_kwargs: dict[str, Any] = {}
+            if not _is_gemini3_model(self.model):
+                config_kwargs["temperature"] = temperature
             if system_instruction:
                 config_kwargs["system_instruction"] = system_instruction
             if max_output_tokens:
@@ -196,15 +219,21 @@ class GeminiClient:
             if json_mode:
                 config_kwargs["response_mime_type"] = "application/json"
 
+            thinking_level = thinking_level_for_model(self.model)
             thinking_budget = thinking_budget_for_model(self.model)
             thinking_cls = getattr(types, "ThinkingConfig", None)
-            if thinking_budget is not None and thinking_cls is not None:
+            if thinking_cls is not None:
                 try:
-                    config_kwargs["thinking_config"] = thinking_cls(
-                        thinking_budget=thinking_budget
-                    )
+                    if thinking_level is not None:
+                        config_kwargs["thinking_config"] = thinking_cls(
+                            thinking_level=thinking_level
+                        )
+                    elif thinking_budget is not None:
+                        config_kwargs["thinking_config"] = thinking_cls(
+                            thinking_budget=thinking_budget
+                        )
                 except Exception:
-                    log.debug("Could not disable Gemini thinking", exc_info=True)
+                    log.debug("Could not configure Gemini thinking", exc_info=True)
 
             try:
                 config = types.GenerateContentConfig(**config_kwargs)
