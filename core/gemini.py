@@ -1,4 +1,4 @@
-"""Google Gemini client used by all four features.
+"""Google Gemini client used by every feature.
 
 Supports the modern ``google-genai`` SDK and falls back to the legacy
 ``google-generativeai`` package when only that one is installed. Every feature

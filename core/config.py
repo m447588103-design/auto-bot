@@ -203,6 +203,19 @@ class SniperSettings:
 
 
 @dataclass(frozen=True)
+class GameSettings:
+    enabled: bool
+    session_ttl_minutes: int
+    max_active_sessions: int
+    rpg_cooldown_seconds: float
+    interrogation_cooldown_seconds: float
+    boss_cooldown_seconds: float
+    boss_base_hp: int
+    max_interrogations: int
+    ai_narration: bool
+
+
+@dataclass(frozen=True)
 class Settings:
     discord: DiscordSettings
     gemini: GeminiSettings
@@ -210,6 +223,7 @@ class Settings:
     cinematic: CinematicSettings
     dj: DJSettings
     sniper: SniperSettings
+    games: GameSettings
     data_dir: Path
     db_path: Path
     log_level: str
@@ -241,6 +255,7 @@ class Settings:
             "youtube_upload": (
                 "configured" if self.cinematic.youtube_upload_configured else "not configured"
             ),
+            "games": "enabled" if self.games.enabled else "disabled",
         }
 
     @classmethod
@@ -337,6 +352,19 @@ class Settings:
                 ),
                 cache_ttl_seconds=_int("SNIPER_CACHE_TTL", 60, minimum=10),
                 request_timeout=_float("SNIPER_REQUEST_TIMEOUT", 20.0, minimum=3.0),
+            ),
+            games=GameSettings(
+                enabled=_bool("GAMES_ENABLED", True),
+                session_ttl_minutes=_int("GAMES_SESSION_TTL", 180, minimum=10),
+                max_active_sessions=_int("GAMES_MAX_SESSIONS", 200, minimum=1),
+                rpg_cooldown_seconds=_float("GAMES_RPG_COOLDOWN", 2.0, minimum=0.5),
+                interrogation_cooldown_seconds=_float(
+                    "GAMES_INTERROGATION_COOLDOWN", 5.0, minimum=1.0
+                ),
+                boss_cooldown_seconds=_float("GAMES_BOSS_COOLDOWN", 8.0, minimum=2.0),
+                boss_base_hp=_int("GAMES_BOSS_BASE_HP", 280, minimum=100),
+                max_interrogations=_int("GAMES_MAX_INTERROGATIONS", 24, minimum=3),
+                ai_narration=_bool("GAMES_AI_NARRATION", True),
             ),
             data_dir=data_dir,
             db_path=_path("DATABASE_PATH", str(data_dir / "autobot.db")),

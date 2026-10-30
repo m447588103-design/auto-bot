@@ -26,13 +26,20 @@ async def test_all_extensions_load_and_register_commands(tmp_path: Path):
             await bot.load_extension(extension)
 
         cog_names = {cog.qualified_name for cog in bot.cogs.values()}
-        assert {"Assistant", "Leak Monitor", "Cinematic Director", "AI DJ", "Market Sniper"} <= cog_names
+        assert {
+            "Assistant",
+            "Leak Monitor",
+            "Cinematic Director",
+            "AI DJ",
+            "Market Sniper",
+            "AI Games",
+        } <= cog_names
 
         tree = bot.tree
-        for group in ("leak", "movie", "dj", "sniper"):
+        for group in ("leak", "movie", "dj", "sniper", "game"):
             command = tree.get_command(group)
             assert command is not None, f"/{group} group missing"
-        for root in ("doctor", "help", "features"):
+        for root in ("doctor", "help", "features", "rpg", "detective", "bossfight"):
             assert tree.get_command(root) is not None, f"/{root} missing"
 
         leak = tree.get_command("leak")
@@ -49,10 +56,27 @@ async def test_all_extensions_load_and_register_commands(tmp_path: Path):
         assert {"hype", "coin", "analyze", "movers", "newpairs", "stock", "watch", "alerts"} <= {
             cmd.name for cmd in sniper.commands
         }
+        game = tree.get_command("game")
+        assert {
+            "rpg",
+            "choose",
+            "detective",
+            "interrogate",
+            "accuse",
+            "bossfight",
+            "join",
+            "attack",
+            "spell",
+            "heal",
+            "status",
+            "quit",
+        } <= {cmd.name for cmd in game.commands}
 
         # prefix commands still exist for backwards compatibility
         assert bot.get_command("agent") is not None
         assert bot.get_command("doctor") is not None
+        for prefix in ("rpg", "choose", "detective", "interrogate", "accuse", "bossfight", "attack"):
+            assert bot.get_command(prefix) is not None, f"!{prefix} missing"
     finally:
         for extension in reversed(EXTENSIONS):
             try:

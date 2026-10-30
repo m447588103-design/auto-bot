@@ -34,6 +34,10 @@ FEATURE_GUIDE = [
         "🚀 Market sniper",
         "`/sniper hype` · `/sniper coin` · `/sniper analyze` · `/sniper movers` · `/sniper newpairs` · `/sniper stock` · `/sniper watch` · `/sniper alerts`",
     ),
+    (
+        "🎮 AI games",
+        "`/rpg` · `/game rpg` · `/game choose` · `/detective` · `/game interrogate` · `/game accuse` · `/bossfight` · `/game attack` · `/game spell` · `/game heal` · `/game join`",
+    ),
 ]
 
 
@@ -74,10 +78,10 @@ class AssistantCog(commands.Cog, name="Assistant"):
         await interaction.response.defer(thinking=True, ephemeral=True)
         emb = embed(
             "🤖 AutoBot — AI automation suite",
-            "Four production-grade automations in one Discord bot.\n"
+            "Four production-grade automations plus a Gemini-powered games suite.\n"
             f"Prefix commands also work with `{settings.discord.command_prefix}` "
             f"(e.g. `{settings.discord.command_prefix}agent`, "
-            f"`{settings.discord.command_prefix}doctor`).",
+            f"`{settings.discord.command_prefix}rpg`).",
             color=BRAND,
             fields=[(name, value, False) for name, value in FEATURE_GUIDE],
             footer="AutoBot • use cautiously: leak monitoring and market tools are informational only",

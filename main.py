@@ -1,7 +1,7 @@
 """AutoBot entry point.
 
-Boots the Discord bot, attaches the four feature services and starts the
-background workers (leak scanner + price alerts).
+Boots the Discord bot, attaches the feature services and starts the background
+workers (leak scanner + price alerts).
 
 Run with::
 
@@ -22,6 +22,7 @@ from core.db import Database
 from core.logging_setup import setup_logging
 from features.cinematic.pipeline import MoviePipeline
 from features.dj.curator import DJCurator
+from features.games.service import GameService
 from features.leak_monitor.monitor import LeakMonitor
 from features.leak_monitor.store import LeakStore
 from features.sniper.alerts import PriceAlertService
@@ -37,6 +38,7 @@ EXTENSIONS = (
     "features.cinematic.cog",
     "features.dj.cog",
     "features.sniper.cog",
+    "features.games.cog",
 )
 
 
@@ -68,6 +70,7 @@ class AutoBot(commands.Bot):
         )
         self.movie_pipeline = MoviePipeline(config.cinematic)
         self.dj_curator = DJCurator(config.dj)
+        self.games = GameService(self, self.db, config.games)
         self.market_data = MarketData(config.sniper)
         self.hype_engine = HypeEngine(config.sniper)
         self.market_analyst = MarketAnalyst()
@@ -114,7 +117,7 @@ class AutoBot(commands.Bot):
         await self.change_presence(
             activity=discord.Activity(
                 type=discord.ActivityType.watching,
-                name="/leak /movie /dj /sniper",
+                name="/game /rpg /detective /bossfight",
             ),
             status=discord.Status.online,
         )
