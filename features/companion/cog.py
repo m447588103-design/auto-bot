@@ -26,6 +26,17 @@ RESET_WORDS = {"reset", "clear", "forget"}
 HELP_WORDS = {"help", "?", "commands"}
 
 
+def _private_ephemeral(interaction: discord.Interaction, private: bool) -> bool:
+    """Ephemeral replies only exist in guilds; a DM is already private."""
+    return bool(private and getattr(interaction, "guild", None) is not None)
+
+
+def _dm_contexts(func):
+    """Allow a companion command in guilds and one-to-one DMs."""
+    func = app_commands.allowed_contexts(guilds=True, dms=True, private_channels=False)(func)
+    return app_commands.allowed_installs(guilds=True, users=True)(func)
+
+
 class CompanionCog(commands.Cog, name="Companion"):
     """A wholesome AI girlfriend and a Gemini-powered Q&A assistant."""
 
@@ -114,6 +125,7 @@ class CompanionCog(commands.Cog, name="Companion"):
 
     # -- slash commands ----------------------------------------------------
     @app_commands.command(name="gf", description="Chat with your AI girlfriend")
+    @_dm_contexts
     @app_commands.describe(
         message="What you want to say to her",
         private="Only you can see the reply (default: everyone in the channel)",
@@ -128,17 +140,20 @@ class CompanionCog(commands.Cog, name="Companion"):
         lowered = text.lower()
         if not text or lowered in HELP_WORDS:
             await interaction.response.send_message(
-                embed=gf_help_embed(self.service.gf_name), ephemeral=True
+                embed=gf_help_embed(self.service.gf_name),
+                ephemeral=_private_ephemeral(interaction, True),
             )
             return
         if lowered in RESET_WORDS:
             cleared = await self.service.reset_memory(interaction.user.id)
             await interaction.response.send_message(
-                embed=gf_reset_embed(self.service.gf_name, cleared), ephemeral=True
+                embed=gf_reset_embed(self.service.gf_name, cleared),
+                ephemeral=_private_ephemeral(interaction, True),
             )
             return
 
-        await interaction.response.defer(thinking=True, ephemeral=private)
+        ephemeral = _private_ephemeral(interaction, private)
+        await interaction.response.defer(thinking=True, ephemeral=ephemeral)
         reply = await self.service.gf_chat(
             interaction.user.id,
             getattr(interaction.user, "display_name", "friend"),
@@ -148,22 +163,25 @@ class CompanionCog(commands.Cog, name="Companion"):
         if not chunks:
             raise CompanionError("💖 She had nothing to say — try again.")
         await interaction.followup.send(
-            chunks[0], ephemeral=private, allowed_mentions=NO_MENTIONS
+            chunks[0], ephemeral=ephemeral, allowed_mentions=NO_MENTIONS
         )
         for chunk in chunks[1:]:
             await interaction.followup.send(
-                chunk, ephemeral=private, allowed_mentions=NO_MENTIONS
+                chunk, ephemeral=ephemeral, allowed_mentions=NO_MENTIONS
             )
 
     @app_commands.command(name="gfreset", description="Clear your AI companion chat memory")
+    @_dm_contexts
     async def gfreset_slash(self, interaction: discord.Interaction) -> None:
-        await interaction.response.defer(thinking=True, ephemeral=True)
+        ephemeral = _private_ephemeral(interaction, True)
+        await interaction.response.defer(thinking=True, ephemeral=ephemeral)
         cleared = await self.service.reset_memory(interaction.user.id)
         await interaction.followup.send(
-            embed=gf_reset_embed(self.service.gf_name, cleared), ephemeral=True
+            embed=gf_reset_embed(self.service.gf_name, cleared), ephemeral=ephemeral
         )
 
     @app_commands.command(name="ask", description="Ask a question and get a detailed answer")
+    @_dm_contexts
     @app_commands.describe(
         question="Any question — coding, science, study help, everyday life",
         private="Only you can see the answer (default: everyone in the channel)",
@@ -174,7 +192,8 @@ class CompanionCog(commands.Cog, name="Companion"):
         question: str,
         private: bool = False,
     ) -> None:
-        await interaction.response.defer(thinking=True, ephemeral=private)
+        ephemeral = _private_ephemeral(interaction, private)
+        await interaction.response.defer(thinking=True, ephemeral=ephemeral)
         reply = await self.service.ask(
             interaction.user.id,
             getattr(interaction.user, "display_name", "friend"),
@@ -182,11 +201,11 @@ class CompanionCog(commands.Cog, name="Companion"):
         )
         embeds = ask_embeds(question, reply.text, reply.model)
         await interaction.followup.send(
-            embed=embeds[0], ephemeral=private, allowed_mentions=NO_MENTIONS
+            embed=embeds[0], ephemeral=ephemeral, allowed_mentions=NO_MENTIONS
         )
         for emb in embeds[1:]:
             await interaction.followup.send(
-                emb, ephemeral=private, allowed_mentions=NO_MENTIONS
+                emb, ephemeral=ephemeral, allowed_mentions=NO_MENTIONS
             )
 
     # -- errors ------------------------------------------------------------
@@ -224,10 +243,11 @@ class CompanionCog(commands.Cog, name="Companion"):
             log.exception("Companion app command failed", exc_info=original)
             emb = error_embed("Something unexpected happened — please try again.")
         try:
+            ephemeral = _private_ephemeral(interaction, True)
             if interaction.response.is_done():
-                await interaction.followup.send(embed=emb, ephemeral=True)
+                await interaction.followup.send(embed=emb, ephemeral=ephemeral)
             else:
-                await interaction.response.send_message(embed=emb, ephemeral=True)
+                await interaction.response.send_message(embed=emb, ephemeral=ephemeral)
         except discord.HTTPException:
             log.warning("Could not send companion error response", exc_info=True)
 

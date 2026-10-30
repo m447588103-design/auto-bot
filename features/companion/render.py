@@ -152,7 +152,8 @@ def gf_help_embed(gf_name: str) -> discord.Embed:
                 "Good to know",
                 "• AI companion, not a human — she will say so if asked.\n"
                 "• Wholesome and PG-13; no manipulation or pressure.\n"
-                "• `!gf` and `!ask` also work in the bot's DMs.",
+                "• `!gf`, `/gf`, `!ask` and `/ask` all work in the bot's DMs.\n"
+                "• In a server, `private:true` makes the reply ephemeral; in a DM it is already private.",
                 False,
             ),
         ],

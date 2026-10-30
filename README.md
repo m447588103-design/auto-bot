@@ -91,7 +91,7 @@ main.py                     # bot bootstrap, service wiring, command sync
 │   ├── games/              # models, engine, store, storyteller, render, views, cog
 │   ├── companion/          # AI girlfriend + smart Q&A (service, memory, render, cog)
 │   └── assistant/          # !agent, /help, /doctor
-├── tests/                  # 115 offline tests (no network, no ffmpeg needed)
+├── tests/                  # 116 offline tests (no network, no ffmpeg needed)
 ├── scripts/                # setup checker, Gemini health check + YouTube OAuth helper
 ├── assets/music/           # drop royalty-free background tracks here
 └── data/                   # sqlite DB, rendered videos, logs (git-ignored)
@@ -344,7 +344,7 @@ memory-তে থাকে, তাই আগের কথা মনে রাখ
 | Command | Description |
 |---------|-------------|
 | `!gf <message>` · `/gf message:<...>` | গার্লফ্রেন্ডের সাথে চ্যাট (DM-এও চলে) |
-| `/gf message:<...> private:true` | শুধু নিজে উত্তর দেখুন |
+| `/gf message:<...> private:true` | শুধু নিজে উত্তর দেখুন (server-এ ephemeral; DM-এ এমনিতেই private) |
 | `!gfreset` · `/gfreset` · `!gf reset` | সেভ করা চ্যাট মেমোরি মুছে ফেলুন |
 
 > 🛡️ **সীমা:** PG-13, কোনো যৌন কনটেন্ট নেই, টাকা/পাসওয়ার্ড চায় না, exclusivity-তে চাপ দেয় না,
@@ -456,7 +456,7 @@ Image-এ ffmpeg, `fonts-dejavu`, `fonts-noto-bengali` আর Python deps আছ
 
 ```bash
 pip install -r requirements-dev.txt
-pytest              # 115 offline tests: matcher, store, mood, scripts, captions,
+pytest              # 116 offline tests: matcher, store, mood, scripts, captions,
                     # pipeline orchestration (fakes), alerts, command registration,
                     # game engine, local storyteller, game service flows,
                     # companion memory, persona prompts, Q&A chunking
@@ -487,7 +487,7 @@ TTS/stock/ffmpeg ফাংশন monkeypatch করা হয়।
 | `!ask` বলছে key নেই | `.env` ফাইলে `GEMINI_API_KEY=...` দিন (টার্মিনালে টাইপ করবেন না), তারপর `python main.py` restart করুন |
 | `!gf` offline reply দিচ্ছে | `python scripts/gemini_check.py` চালান। key না থাকলে `.env`-এ দিন; key থাকলে API/quota/model error দেখাবে |
 | key দেওয়ার পরও AI empty/offline | 3.8 Flash-এর default `medium` thinking উত্তর দেরি করায় বা token খায় — latest code-এ 3.8 Flash-এ `low`, 2.5 Flash-এ thinking off; `GEMINI_MODEL=gemini-3.8-flash` দিয়ে restart করুন |
-| Slash `/gf` DM-এ দেখা যাচ্ছে না | prefix `!gf` DM-এ সবসময় কাজ করে; global slash sync-এ সময় লাগতে পারে |
+| Slash `/gf` DM-এ দেখা যাচ্ছে না | latest code global commands sync করে; Discord-এ global publish হতে কিছু সময় (মাঝে মাঝে ১ ঘণ্টা) লাগে। ততক্ষণ prefix `!gf` DM-এ কাজ করবে |
 | গেমের বাটন কাজ করছে না | সেশন expire হতে পারে — `/game status` দেখুন, নতুন গেম শুরু করুন; restart-এ active view আবার register হয় |
 
 ---
